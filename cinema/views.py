@@ -1,4 +1,6 @@
-from rest_framework import viewsets
+from typing import Type
+from django.db.models import QuerySet
+from rest_framework import viewsets, serializers
 
 from cinema.models import CinemaHall, Genre, Actor, MovieSession, Movie
 from cinema.serializers import (
@@ -15,51 +17,51 @@ from cinema.serializers import (
 
 
 class CinemaHallViewSet(viewsets.ModelViewSet):
-    queryset = CinemaHall.objects.all()
+    queryset: QuerySet[CinemaHall] = CinemaHall.objects.all()
     serializer_class = CinemaHallSerializer
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
+    queryset: QuerySet[Genre] = Genre.objects.all()
     serializer_class = GenreSerializer
 
 
 class ActorViewSet(viewsets.ModelViewSet):
-    queryset = Actor.objects.all()
+    queryset: QuerySet[Actor] = Actor.objects.all()
     serializer_class = ActorSerializer
 
 
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movie.objects.all()
+    queryset: QuerySet[Movie] = Movie.objects.all()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[serializers.BaseSerializer]:
         if self.action == "list":
             return MovieListSerializer
         elif self.action == "retrieve":
             return MovieRetrieveSerializer
         return MovieSerializer
 
-    def get_queryset(self):
-        queryset = self.queryset
+    def get_queryset(self) -> QuerySet[Movie]:
+
         if self.action in ("list", "retrieve"):
-            return queryset.prefetch_related("genres", "actors")
-        return queryset
+            return Movie.objects.prefetch_related("genres", "actors")
+        return self.queryset
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
-    queryset = MovieSession.objects.all()
+    queryset: QuerySet[MovieSession] = MovieSession.objects.all()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[serializers.BaseSerializer]:
         if self.action == "list":
             return MovieSessionListSerializer
         elif self.action == "retrieve":
             return MovieSessionRetrieveSerializer
         return MovieSessionSerializer
 
-    def get_queryset(self):
-        queryset = self.queryset
+    def get_queryset(self) -> QuerySet[MovieSession]:
+
         if self.action in ("list", "retrieve"):
-            return MovieSession.objects.select_related(
+            return self.queryset.select_related(
                 "movie", "cinema_hall"
             )
-        return queryset
+        return self.queryset
